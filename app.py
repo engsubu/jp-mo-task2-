@@ -4,7 +4,7 @@ import os
 
 st.set_page_config(page_title="JPM Gas Storage Pricing", layout="wide")
 
-# ========== 1. DATA LOADING - FIXED FOR Dates + Prices ==========
+# ========== 1. DATA LOADING ==========
 @st.cache_data
 def load_data():
     """Loads gas_prices.csv and auto-maps any Forage column names to date/price"""
@@ -39,7 +39,7 @@ def load_data():
 
 df = load_data()
 
-# ========== 2. CORE PRICING LOGIC ==========
+# ========== 2. CORE PRICING LOGIC - FIXED LOG TABLE ==========
 def price_storage_contract(injection_dates, withdrawal_dates, prices_df, 
                            rate, max_volume, storage_cost_per_day):
     """
@@ -60,7 +60,7 @@ def price_storage_contract(injection_dates, withdrawal_dates, prices_df,
 
     current_volume = 0.0
     cashflow = 0.0
-    log = []
+    log = [] # [Date, Action, Bcf, Price, Cashflow, Volume End] = 6 cols
 
     for date, action in events:
         if date not in price_map: 
@@ -96,6 +96,7 @@ def price_storage_contract(injection_dates, withdrawal_dates, prices_df,
             total_storage_cost += vol * storage_cost_per_day
             
         cashflow -= total_storage_cost
+        # FIXED: 6 items to match 6 columns. Empty '' for Bcf and Price
         log.append([end_date, 'Storage Cost', '', -total_storage_cost, vol])
     
     return round(cashflow, 2), pd.DataFrame(log, columns=['Date', 'Action', 'Bcf', 'Price', 'Cashflow', 'Volume End'])
